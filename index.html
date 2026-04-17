@@ -1,114 +1,36 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-<title>Interactive Butterfly AR</title>
- <!-- include A-Frame obviously -->
-<script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
-<!-- include ar.js for A-Frame -->
-<script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
-</head>
-
-
-<body style='margin : 0px; overflow: hidden;'>
-  <a-scene embedded arjs>
-    <!-- define a camera which will move according to the marker position -->
-     <a-marker type='pattern' url='swallowtail2.patt'>
-           <!-- use your gltf model -->
-      <a-entity gltf-model="tiger_swallowtailFin.glb" position = "0 0 0" scale = "0.3 0.3 0.3"></a-entity>
-      </a-marker>
+    <head>
+        <meta charset="UTF-8" />
+        <title>Title</title>
+        
+        <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.2.0/model-viewer.min.js"></script>
+        
+        
+    </head>
+    <body>
     
-      
-      <a-entity camera></a-entity>
-  
-  </a-scene>
-</body>
+        
+        <model-viewer 
+            src = "tiger_swallowtailFin.glb" 
+            style="width: 100vw; height: 90vh"
+            camera-controls touch-action="pan-y"
+            ar
+            scale="3 3 3"
+        >
+        <button id="ar-button" slot="ar-button">Start AR</button>
+        </model-viewer>
+    
+         <model-viewer 
+            src = "Tiger_Swallowtail.usdz" 
+            style="width: 100vw; height: 90vh"
+            camera-controls touch-action="pan-y"
+            ar
+            scale="3 3 3"
+        >
+        </model-viewer>
+        
+    </body>
+    
+    
 </html>
-
-<script>
-const parent = document.getElementById("modelParent");
-
-let lastTouches = [];
-let scale = 1;
-let rotationY = 0;
-let position = { x: 0, y: 0, z: 0 };
-
-// Helpers
-function getDistance(t1, t2) {
-  return Math.hypot(
-    t2.clientX - t1.clientX,
-    t2.clientY - t1.clientY
-  );
-}
-
-function getAngle(t1, t2) {
-  return Math.atan2(
-    t2.clientY - t1.clientY,
-    t2.clientX - t1.clientX
-  ) * (180 / Math.PI);
-}
-
-// TOUCH START
-window.addEventListener("touchstart", (e) => {
-  lastTouches = e.touches;
-});
-
-// TOUCH MOVE
-window.addEventListener("touchmove", (e) => {
-  e.preventDefault();
-
-  const touches = e.touches;
-
-  // 🟢 ONE FINGER → MOVE
-  if (touches.length === 1 && lastTouches.length === 1) {
-    let dx = touches[0].clientX - lastTouches[0].clientX;
-    let dy = touches[0].clientY - lastTouches[0].clientY;
-
-    // adjust sensitivity
-    position.x += dx * 0.005;
-    position.z += dy * 0.005;
-
-    parent.setAttribute(
-      "position",
-      `${position.x} 0 ${-position.z}`
-    );
-  }
-
-  // 🔵 TWO FINGERS → SCALE + ROTATE
-  if (touches.length === 2 && lastTouches.length === 2) {
-
-    // SCALE
-    let prevDist = getDistance(lastTouches[0], lastTouches[1]);
-    let newDist = getDistance(touches[0], touches[1]);
-
-    let scaleFactor = newDist / prevDist;
-    scale *= scaleFactor;
-
-    // clamp scale
-    scale = Math.min(Math.max(scale, 0.2), 5);
-
-    parent.setAttribute(
-      "scale",
-      `${scale} ${scale} ${scale}`
-    );
-
-    // ROTATE
-    let prevAngle = getAngle(lastTouches[0], lastTouches[1]);
-    let newAngle = getAngle(touches[0], touches[1]);
-
-    let angleDiff = newAngle - prevAngle;
-    rotationY += angleDiff;
-
-    parent.setAttribute(
-      "rotation",
-      `0 ${rotationY} 0`
-    );
-  }
-
-  lastTouches = touches;
-}, { passive: false });
-
-// RESET when fingers lifted
-window.addEventListener("touchend", () => {
-  lastTouches = [];
-});
-</script>
