@@ -9,30 +9,34 @@
 <!-- Import Hammer.js Library -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js" integrity="sha512-UXumZrZNiOwnTcZSHLOfcTs0aos2MzBWHXOHOuB0J/R44QB0dwY5JgfbvljXcklVf65Gc4El6RjZ+lnwd2az2g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script>
+    //script for rotation and scale functions
 AFRAME.registerComponent("controller", {
   init: function () {
+    //ensures the model loads but isn't visible yet
     this.modelVisible = false;
+    //this is null so that the user can't interact before the model is loaded
     this.mesh = null;
 
-    // IMPORTANT: listen on marker (parent)
+    // the marker is the parent of the model
     this.marker = this.el.parentEl;
-
+      
+    //tracking the marker
     this.marker.addEventListener("markerFound", () => this.modelVisible = true);
     this.marker.addEventListener("markerLost", () => this.modelVisible = false);
 
-    // get THIS entity's model (not global querySelector)
+    // changed this to model-loaded to load both models instead of just one
     this.el.addEventListener("model-loaded", (evt) => {
       this.mesh = evt.detail.model;
     });
 
-    // attach Hammer to canvas (not body)
+    // attach Hammer to canvas relative to the html setup -- a-scene is canvas
     const hammertime = new Hammer(this.el.sceneEl.canvas);
-
+    // draws on hammertime pinch gesture
     hammertime.get('pinch').set({ enable: true });
-
-    let startScale = 1;
-
-    hammertime.on("pinchstart", () => {
+    //scale of object is what is set in html below
+    var startScale = 1;
+    hammertime.on("pinchstart", (ev) => {
+    // the ! means opposite of null, so when mesh is shown pinch is enabled
       if (!this.mesh) return;
       startScale = this.mesh.scale.x;
     });
@@ -40,19 +44,46 @@ AFRAME.registerComponent("controller", {
     hammertime.on("pinchmove", (ev) => {
       if (!this.modelVisible || !this.mesh) return;
 
+    //changed line 30 of the referenced code because the Scalar part caused jittering
       const newScale = startScale * ev.scale;
 
       this.mesh.scale.set(newScale, newScale, newScale);
     });
 
-    // rotation (simplified + smoother)
-    hammertime.on("panmove", (ev) => {
-      if (!this.modelVisible || !this.mesh) return;
+   // rotation
+    // pan left/right for rotation
+    this.isPanning = false;
+    hammertime.on("panleft", () => {
+        if (!this.modelVisible) return;
+        this.isPanning = true
+        this.mesh.rotation.y -= 4 * Math.PI / 360;
+    })
 
-      this.mesh.rotation.y += ev.deltaX * 0.005;
-    });
-  }
+    hammertime.on("panright", () => {
+        if (!this.modelVisible) return;
+        this.isPanning = true
+        this.mesh.rotation.y += 4 * Math.PI / 360;
+    })
+    hammertime.on("panend", () => this.isPanning = false)
+    hammertime.on("pancancel", () => this.isPanning = false)
+
+    hammertime.on("swipeleft",  ({velocity}) => {
+        if (!this.modelVisible) return;
+        this.swipeVelocity = velocity
+    })
+    hammertime.on("swiperight", ({velocity}) => {
+        if (!this.modelVisible) return;
+        this.swipeVelocity = velocity
+    })
+},
+tick: function() {
+    if (!(this.modelVisible && this.swipeVelocity &&!this.isPanning)) return;
+    this.mesh.rotation.y += this.swipeVelocity * 4 * Math.PI / 360;
+    this.swipeVelocity *= 0.93;
+    if (Math.abs(this.swipeVelocity) <= 0.1) this.swipeVelocity = 0;
+}
 });
+    
 </script>
     
 </head>
@@ -73,7 +104,7 @@ AFRAME.registerComponent("controller", {
       <a-entity gltf-model="monarch_Fin.glb" 
                 position = "0 0 0" 
                 scale = "0.5 0.5 0.5" 
-                ></a-entity>
+                controller></a-entity>
       </a-marker>
       
       <!-- define a camera which will move according to the marker position -->
