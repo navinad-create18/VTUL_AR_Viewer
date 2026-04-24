@@ -46,7 +46,7 @@ AFRAME.registerComponent("controller", {
 
     //changed line 30 of the referenced code because the Scalar part caused jittering
       const newScale = startScale * ev.scale;
-
+    //this sets the scale without any other math
       this.mesh.scale.set(newScale, newScale, newScale);
     });
 
@@ -88,6 +88,12 @@ tick: function() {
     
 </head>
 <body style='margin : 0px; overflow: hidden;'>
+    <div style='top: 10px;text-align: center; font-family: Gill Sans; z-index: 1; color: orange'>
+        Model from <a href="https://sketchfab.com/VirginiaTechUnivLibraries">VT University Libraries</a><br>
+        Source code from <a href="https://github.com/gftruj/webzamples/tree/master/ar">here</a><br>
+        Try pinching and swiping (left/right) <br>
+        to move the butterflies!
+      </div>
   <a-scene embedded arjs>
       <!-- define a marker for the model to track -->
      <a-marker type='pattern' url='swallowtail2.patt'>
