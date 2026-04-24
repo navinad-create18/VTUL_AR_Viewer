@@ -11,42 +11,44 @@
 <script>
         //add javascript code within script tag for hammertime
     //defines hammertime for AFrame copy and pasted, changed to a-entity
-    AFRAME.registerComponent("foo",{ 
-    init:function() { 
-     var element = document.querySelector('body'); 
-     this.marker = document.querySelector('a-marker') 
-     var model = document.querySelector('a-entity'); 
-     var hammertime = new Hammer(element); 
-     var pinch = new Hammer.Pinch(); 
-     // Pinch is not by default in the recognisers hammertime.add(pinch); 
-     // // add it to the Manager instance
-    
-     //code from Stack Overflow
-      hammertime.on('pan', (ev) => {
-     let rotation = model.getAttribute("rotation")
-     switch(ev.direction) {
-       case 2:
-         rotation.y = rotation.y + 4
-         break;
-       case 4:
-         rotation.y = rotation.y - 4
-         break;
-       case 8:
-         rotation.x = rotation.x + 4
-         break;
-       case 16:
-         rotation.x = rotation.x - 4
-         break;
-       default:
-         break;
-     }
-     model.setAttribute("rotation", rotation)
-   });
+AFRAME.registerComponent("foo", {
+  init: function () {
+    const sceneEl = this.el.sceneEl;
+    const model = this.el;
 
-  hammertime.on("pinch", (ev) => {
-     let scale = {x:ev.scale, y:ev.scale, z:ev.scale}
-     model.setAttribute("scale", scale);
- });
+    const hammertime = new Hammer(sceneEl.canvas);
+
+    // Enable pinch
+    hammertime.get('pinch').set({ enable: true });
+
+    let currentScale = model.getAttribute("scale");
+
+    // Rotation (pan)
+    hammertime.on('pan', (ev) => {
+      let rotation = model.getAttribute("rotation");
+
+      rotation.y += ev.deltaX * 0.1;
+      rotation.x += ev.deltaY * 0.1;
+
+      model.setAttribute("rotation", rotation);
+    });
+
+    // Scaling (pinch)
+    hammertime.on("pinch", (ev) => {
+      let newScale = {
+        x: currentScale.x * ev.scale,
+        y: currentScale.y * ev.scale,
+        z: currentScale.z * ev.scale
+      };
+
+      model.setAttribute("scale", newScale);
+    });
+
+    hammertime.on("pinchend", () => {
+      currentScale = model.getAttribute("scale");
+    });
+  }
+});
     
     
 </script>
